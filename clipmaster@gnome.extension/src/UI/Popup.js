@@ -1466,35 +1466,41 @@ export const ClipboardPopup = GObject.registerClass(
         }
 
         _scrollToSelected() {
-            if (this._selectedIndex < 0 || !this._itemsBox) return;
+            if (this._selectedIndex < 0 || !this._itemsBox || !this._scrollView) return;
 
             const children = this._itemsBox.get_children();
             if (this._selectedIndex >= children.length) return;
 
             const child = children[this._selectedIndex];
 
-            try {
-                // Ensure the import worked for the user's GNOME version
-                if (Util && Util.ensureActorVisibleInScrollView) {
-                    Util.ensureActorVisibleInScrollView(this._scrollView, child);
-                    debugLog(`Scrolled to item ${this._selectedIndex} via Util.ensureActorVisibleInScrollView`);
-                } else {
-                    debugLog('Util.ensureActorVisibleInScrollView not available, finding standard fallback');
-                    // Fallback to manual calculation if Util fails
-                    const adjustment = this._scrollView.vscroll.adjustment;
-                    const [value, lower, upper, stepIncrement, pageIncrement, pageSize] = adjustment.get_values();
-                    const box = child.get_allocation_box();
-                    const childTop = box.y1;
-                    const childBottom = box.y2;
+            // Use vadjustment - the correct property for St.ScrollView
+            const vadjustment = this._scrollView.vadjustment;
+            if (!vadjustment) {
+                debugLog('No vadjustment found on scrollView');
+                return;
+            }
 
-                    if (childTop < value) {
-                        adjustment.set_value(childTop);
-                    } else if (childBottom > value + pageSize) {
-                        adjustment.set_value(childBottom - pageSize);
-                    }
-                }
-            } catch (e) {
-                debugLog(`Scroll error: ${e.message}`);
+            // Get child position relative to its parent (_itemsBox)
+            const childY = child.y;
+            const childHeight = child.height;
+            const childBottom = childY + childHeight;
+
+            // Get current scroll state
+            const scrollValue = vadjustment.value;
+            const pageSize = vadjustment.page_size;
+            const scrollBottom = scrollValue + pageSize;
+
+            debugLog(`Scroll debug: childY=${childY}, childHeight=${childHeight}, scrollValue=${scrollValue}, pageSize=${pageSize}`);
+
+            // Scroll up if child is above visible area
+            if (childY < scrollValue) {
+                vadjustment.value = childY;
+                debugLog(`Scrolling UP to ${childY}`);
+            }
+            // Scroll down if child is below visible area
+            else if (childBottom > scrollBottom) {
+                vadjustment.value = childBottom - pageSize;
+                debugLog(`Scrolling DOWN to ${childBottom - pageSize}`);
             }
         }
     });
