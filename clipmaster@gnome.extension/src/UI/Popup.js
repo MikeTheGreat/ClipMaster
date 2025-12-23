@@ -1465,35 +1465,36 @@ export const ClipboardPopup = GObject.registerClass(
             return Clutter.EVENT_PROPAGATE;
         }
 
-        if(this._selectedIndex < 0 || !this._itemsBox) return;
+        _scrollToSelected() {
+            if (this._selectedIndex < 0 || !this._itemsBox) return;
 
-const children = this._itemsBox.get_children();
-if (this._selectedIndex >= children.length) return;
+            const children = this._itemsBox.get_children();
+            if (this._selectedIndex >= children.length) return;
 
-const child = children[this._selectedIndex];
+            const child = children[this._selectedIndex];
 
-try {
-    // Ensure the import worked for the user's GNOME version
-    if (Util && Util.ensureActorVisibleInScrollView) {
-        Util.ensureActorVisibleInScrollView(this._scrollView, child);
-        debugLog(`Scrolled to item ${this._selectedIndex} via Util.ensureActorVisibleInScrollView`);
-    } else {
-        debugLog('Util.ensureActorVisibleInScrollView not available, finding standard fallback');
-        // Fallback to manual calculation if Util fails
-        const adjustment = this._scrollView.vscroll.adjustment;
-        const [value, lower, upper, stepIncrement, pageIncrement, pageSize] = adjustment.get_values();
-        const box = child.get_allocation_box();
-        const childTop = box.y1;
-        const childBottom = box.y2;
+            try {
+                // Ensure the import worked for the user's GNOME version
+                if (Util && Util.ensureActorVisibleInScrollView) {
+                    Util.ensureActorVisibleInScrollView(this._scrollView, child);
+                    debugLog(`Scrolled to item ${this._selectedIndex} via Util.ensureActorVisibleInScrollView`);
+                } else {
+                    debugLog('Util.ensureActorVisibleInScrollView not available, finding standard fallback');
+                    // Fallback to manual calculation if Util fails
+                    const adjustment = this._scrollView.vscroll.adjustment;
+                    const [value, lower, upper, stepIncrement, pageIncrement, pageSize] = adjustment.get_values();
+                    const box = child.get_allocation_box();
+                    const childTop = box.y1;
+                    const childBottom = box.y2;
 
-        if (childTop < value) {
-            adjustment.set_value(childTop);
-        } else if (childBottom > value + pageSize) {
-            adjustment.set_value(childBottom - pageSize);
-        }
-    }
-} catch (e) {
-    debugLog(`Scroll error: ${e.message}`);
-}
+                    if (childTop < value) {
+                        adjustment.set_value(childTop);
+                    } else if (childBottom > value + pageSize) {
+                        adjustment.set_value(childBottom - pageSize);
+                    }
+                }
+            } catch (e) {
+                debugLog(`Scroll error: ${e.message}`);
+            }
         }
     });
