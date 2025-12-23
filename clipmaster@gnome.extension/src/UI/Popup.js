@@ -14,7 +14,7 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -1467,17 +1467,21 @@ export const ClipboardPopup = GObject.registerClass(
         _scrollToSelected() {
             if (this._selectedIndex < 0 || !this._itemsBox) return;
 
-            // Wait for layout update
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                if (!this._itemsBox || !this._scrollView) return GLib.SOURCE_REMOVE;
+            const children = this._itemsBox.get_children();
+            if (this._selectedIndex >= children.length) return;
 
-                const children = this._itemsBox.get_children();
-                if (this._selectedIndex >= children.length) return GLib.SOURCE_REMOVE;
+            const child = children[this._selectedIndex];
+            const adjustment = this._scrollView.vscroll.adjustment;
+            const [value, lower, upper, stepIncrement, pageIncrement, pageSize] = adjustment.get_values();
 
-                const child = children[this._selectedIndex];
-                Util.ensureActorVisibleInScrollView(this._scrollView, child);
+            const box = child.get_allocation_box();
+            const childTop = box.y1;
+            const childBottom = box.y2;
 
-                return GLib.SOURCE_REMOVE;
-            });
+            if (childTop < value) {
+                adjustment.set_value(childTop);
+            } else if (childBottom > value + pageSize) {
+                adjustment.set_value(childBottom - pageSize);
+            }
         }
     });
