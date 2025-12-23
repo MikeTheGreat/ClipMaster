@@ -1471,36 +1471,41 @@ export const ClipboardPopup = GObject.registerClass(
             const children = this._itemsBox.get_children();
             if (this._selectedIndex >= children.length) return;
 
-            const child = children[this._selectedIndex];
-
-            // Use vadjustment - the correct property for St.ScrollView
-            const vadjustment = this._scrollView.vadjustment;
-            if (!vadjustment) {
-                debugLog('No vadjustment found on scrollView');
-                return;
+            // Calculate the y position by summing heights of all children before the selected one
+            let childY = 0;
+            for (let i = 0; i < this._selectedIndex; i++) {
+                childY += children[i].height;
             }
 
-            // Get child position relative to its parent (_itemsBox)
-            const childY = child.y;
+            const child = children[this._selectedIndex];
             const childHeight = child.height;
             const childBottom = childY + childHeight;
 
-            // Get current scroll state
+            // Try vadjustment first, then vscroll.adjustment for compatibility
+            let vadjustment = this._scrollView.vadjustment;
+            if (!vadjustment && this._scrollView.vscroll) {
+                vadjustment = this._scrollView.vscroll.adjustment;
+            }
+            if (!vadjustment) {
+                debugLog('ERROR: No vadjustment found');
+                return;
+            }
+
             const scrollValue = vadjustment.value;
             const pageSize = vadjustment.page_size;
             const scrollBottom = scrollValue + pageSize;
 
-            debugLog(`Scroll debug: childY=${childY}, childHeight=${childHeight}, scrollValue=${scrollValue}, pageSize=${pageSize}`);
+            debugLog(`Scroll: idx=${this._selectedIndex}, childY=${childY}, childH=${childHeight}, scroll=${scrollValue}, page=${pageSize}`);
 
             // Scroll up if child is above visible area
             if (childY < scrollValue) {
-                vadjustment.value = childY;
-                debugLog(`Scrolling UP to ${childY}`);
+                vadjustment.set_value(childY);
+                debugLog(`Scrolled UP to ${childY}`);
             }
             // Scroll down if child is below visible area
             else if (childBottom > scrollBottom) {
-                vadjustment.value = childBottom - pageSize;
-                debugLog(`Scrolling DOWN to ${childBottom - pageSize}`);
+                vadjustment.set_value(childBottom - pageSize);
+                debugLog(`Scrolled DOWN to ${childBottom - pageSize}`);
             }
         }
     });

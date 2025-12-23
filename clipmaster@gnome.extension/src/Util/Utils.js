@@ -125,17 +125,27 @@ export class FileUtils {
         try {
             FileUtils.ensureDirectory(path);
             const file = Gio.File.new_for_path(path);
-
             const encoder = new TextEncoder();
-            await file.replace_contents_async(
-                encoder.encode(content),
-                null,
-                false,
-                Gio.FileCreateFlags.REPLACE_DESTINATION,
-                null
-            );
+            const bytes = encoder.encode(content);
 
-            return true;
+            return new Promise((resolve, reject) => {
+                file.replace_contents_bytes_async(
+                    new GLib.Bytes(bytes),
+                    null,
+                    false,
+                    Gio.FileCreateFlags.REPLACE_DESTINATION,
+                    null,
+                    (file, result) => {
+                        try {
+                            file.replace_contents_finish(result);
+                            resolve(true);
+                        } catch (e) {
+                            console.error(`FileUtils.saveTextFile finish error: ${e.message}`);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
         } catch (e) {
             console.error(`FileUtils.saveTextFile error: ${e.message}`);
             return false;

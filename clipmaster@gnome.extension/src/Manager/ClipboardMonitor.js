@@ -200,10 +200,10 @@ export class ClipboardMonitor {
             if (text && text !== this._lastContent) {
                 debugLog(`NEW content detected, processing...`);
                 this._lastContent = text;
-                this._processText(text, 'CLIPBOARD');
+                this._processText(text, 'CLIPBOARD').catch(e => debugLog(`processText error: ${e.message}`));
             } else if (text && text === this._lastContent && !skipDuplicates) {
                 debugLog(`Same content but skip-duplicates=OFF, processing anyway...`);
-                this._processText(text, 'CLIPBOARD');
+                this._processText(text, 'CLIPBOARD').catch(e => debugLog(`processText error: ${e.message}`));
             } else {
                 debugLog(`Same content or null, skipping`);
             }
@@ -245,10 +245,10 @@ export class ClipboardMonitor {
             if (text && text !== this._lastPrimaryContent) {
                 debugLog(`NEW primary content detected, processing...`);
                 this._lastPrimaryContent = text;
-                this._processText(text, 'PRIMARY');
+                this._processText(text, 'PRIMARY').catch(e => debugLog(`processText error: ${e.message}`));
             } else if (text && text === this._lastPrimaryContent && !skipDuplicates) {
                 debugLog(`Same primary content but skip-duplicates=OFF, processing anyway...`);
-                this._processText(text, 'PRIMARY');
+                this._processText(text, 'PRIMARY').catch(e => debugLog(`processText error: ${e.message}`));
             } else {
                 debugLog(`Same primary content or null, skipping`);
             }
