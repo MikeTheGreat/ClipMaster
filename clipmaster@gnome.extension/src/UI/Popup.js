@@ -14,6 +14,7 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -1474,22 +1475,7 @@ export const ClipboardPopup = GObject.registerClass(
                 if (this._selectedIndex >= children.length) return GLib.SOURCE_REMOVE;
 
                 const child = children[this._selectedIndex];
-                const adjustment = this._scrollView.vscroll.adjustment;
-
-                const allocation = child.get_allocation_box();
-                const childTop = allocation.y1;
-                const childBottom = allocation.y2;
-
-                const viewHeight = adjustment.page_size;
-                const scrollValue = adjustment.value;
-
-                debugLog(`ScrollToSelected: childTop=${childTop}, childBottom=${childBottom}, scrollValue=${scrollValue}, viewHeight=${viewHeight}`);
-
-                if (childTop < scrollValue) {
-                    adjustment.value = childTop;
-                } else if (childBottom > scrollValue + viewHeight) {
-                    adjustment.value = childBottom - viewHeight;
-                }
+                Util.ensureActorVisibleInScrollView(this._scrollView, child);
 
                 return GLib.SOURCE_REMOVE;
             });
