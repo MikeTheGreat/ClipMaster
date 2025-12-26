@@ -327,14 +327,9 @@ export class ClipboardDatabase {
             this._pendingItems.find(i => i.contentHash === contentHash || i.hash === contentHash);
 
         let skipDuplicates = true;
-        try {
-            if (this._settings) {
-                skipDuplicates = this._settings.get_boolean('skip-duplicates');
-                debugLog(`skip-duplicates setting = ${skipDuplicates}`);
-            }
-        } catch (e) {
-            debugLog(`Error reading skip-duplicates: ${e.message}`);
-            skipDuplicates = true;
+        if (this._settings) {
+            skipDuplicates = this._settings.get_boolean('skip-duplicates');
+            debugLog(`skip-duplicates setting = ${skipDuplicates}`);
         }
 
         debugLog(`existing=${!!existing}, skipDuplicates=${skipDuplicates}`);

@@ -177,12 +177,7 @@ export default class ClipMasterExtension extends Extension {
             return;
         }
 
-        try {
-            this._indicator.refresh();
-        } catch (e) {
-            // Indicator might be disposed during async operations
-            debugLog(`_refreshIndicator error: ${e.message}`);
-        }
+        this._indicator.refresh();
     }
 
     showPopup() {
@@ -288,13 +283,9 @@ export default class ClipMasterExtension extends Extension {
 
             // Remove from chrome when hidden to prevent any input interference
             if (this._popupAddedToChrome) {
-                try {
-                    Main.layoutManager.removeChrome(this._popup);
-                    this._popupAddedToChrome = false;
-                    debugLog('hidePopup: Removed popup from chrome');
-                } catch (e) {
-                    debugLog(`hidePopup: Error removing from chrome: ${e.message}`);
-                }
+                Main.layoutManager.removeChrome(this._popup);
+                this._popupAddedToChrome = false;
+                debugLog('hidePopup: Removed popup from chrome');
             }
 
             // Move off-screen as extra safety measure

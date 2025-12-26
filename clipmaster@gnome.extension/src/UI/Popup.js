@@ -111,68 +111,64 @@ export const ClipboardPopup = GObject.registerClass(
             // Safety check for disposed object
             if (!this._itemsBox) return;
 
-            try {
-                // Remove all theme classes first
-                this.remove_style_class_name('light');
-                this.remove_style_class_name('theme-adwaita');
-                this.remove_style_class_name('theme-catppuccin');
-                this.remove_style_class_name('theme-dracula');
-                this.remove_style_class_name('theme-nord');
-                this.remove_style_class_name('theme-gruvbox');
-                this.remove_style_class_name('theme-onedark');
-                this.remove_style_class_name('theme-monokai');
-                this.remove_style_class_name('theme-solarized');
-                this.remove_style_class_name('theme-tokyonight');
-                this.remove_style_class_name('theme-rosepine');
-                this.remove_style_class_name('theme-material');
-                this.remove_style_class_name('theme-ayu');
+            // Remove all theme classes first
+            this.remove_style_class_name('light');
+            this.remove_style_class_name('theme-adwaita');
+            this.remove_style_class_name('theme-catppuccin');
+            this.remove_style_class_name('theme-dracula');
+            this.remove_style_class_name('theme-nord');
+            this.remove_style_class_name('theme-gruvbox');
+            this.remove_style_class_name('theme-onedark');
+            this.remove_style_class_name('theme-monokai');
+            this.remove_style_class_name('theme-solarized');
+            this.remove_style_class_name('theme-tokyonight');
+            this.remove_style_class_name('theme-rosepine');
+            this.remove_style_class_name('theme-material');
+            this.remove_style_class_name('theme-ayu');
 
-                const followSystem = this._settings.get_boolean('follow-system-theme');
-                const customThemePath = this._settings.get_string('custom-theme-path') || '';
+            const followSystem = this._settings.get_boolean('follow-system-theme');
+            const customThemePath = this._settings.get_string('custom-theme-path') || '';
 
-                // Handle custom theme file
-                if (customThemePath && !followSystem) {
-                    const customFile = Gio.File.new_for_path(customThemePath);
-                    if (customFile.query_exists(null)) {
-                        try {
-                            if (this._customStylesheet) {
-                                const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-                                theme.unload_stylesheet(this._customStylesheet);
-                            }
-                            const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-                            theme.load_stylesheet(customFile);
-                            this._customStylesheet = customFile;
-                            return; // Custom theme takes precedence
-                        } catch (e) {
-                            console.error(`ClipMaster: Error loading custom theme: ${e.message}`);
-                        }
-                    }
-                } else if (this._customStylesheet) {
+            // Handle custom theme file
+            if (customThemePath && !followSystem) {
+                const customFile = Gio.File.new_for_path(customThemePath);
+                if (customFile.query_exists(null)) {
                     try {
+                        if (this._customStylesheet) {
+                            const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+                            theme.unload_stylesheet(this._customStylesheet);
+                        }
                         const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-                        theme.unload_stylesheet(this._customStylesheet);
-                        this._customStylesheet = null;
+                        theme.load_stylesheet(customFile);
+                        this._customStylesheet = customFile;
+                        return; // Custom theme takes precedence
                     } catch (e) {
-                        console.error(`ClipMaster: Error unloading custom theme: ${e.message}`);
+                        console.error(`ClipMaster: Error loading custom theme: ${e.message}`);
                     }
                 }
-
-                // Detect system dark/light mode
-                let isDark = this._settings.get_boolean('dark-theme');
-                if (followSystem) {
-                    const colorScheme = this._interfaceSettings.get_string('color-scheme');
-                    isDark = colorScheme === 'prefer-dark';
-                    this.add_style_class_name('theme-adwaita');
-                } else {
-                    const themeName = this._settings.get_string('theme') || 'adwaita';
-                    this.add_style_class_name(`theme-${themeName}`);
+            } else if (this._customStylesheet) {
+                try {
+                    const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+                    theme.unload_stylesheet(this._customStylesheet);
+                    this._customStylesheet = null;
+                } catch (e) {
+                    console.error(`ClipMaster: Error unloading custom theme: ${e.message}`);
                 }
+            }
 
-                if (!isDark) {
-                    this.add_style_class_name('light');
-                }
-            } catch (e) {
-                console.error(`ClipMaster: Theme error: ${e.message}`);
+            // Detect system dark/light mode
+            let isDark = this._settings.get_boolean('dark-theme');
+            if (followSystem) {
+                const colorScheme = this._interfaceSettings.get_string('color-scheme');
+                isDark = colorScheme === 'prefer-dark';
+                this.add_style_class_name('theme-adwaita');
+            } else {
+                const themeName = this._settings.get_string('theme') || 'adwaita';
+                this.add_style_class_name(`theme-${themeName}`);
+            }
+
+            if (!isDark) {
+                this.add_style_class_name('light');
             }
         }
 
@@ -430,57 +426,51 @@ export const ClipboardPopup = GObject.registerClass(
 
         _showCreateListDialog() {
             debugLog('_showCreateListDialog called');
-            try {
-                const dialog = new ModalDialog.ModalDialog({ styleClass: 'clipmaster-dialog' });
+            const dialog = new ModalDialog.ModalDialog({ styleClass: 'clipmaster-dialog' });
 
-                const label = new St.Label({
-                    text: _('Create New List'),
-                    style_class: 'clipmaster-dialog-title'
-                });
-                dialog.contentLayout.add_child(label);
+            const label = new St.Label({
+                text: _('Create New List'),
+                style_class: 'clipmaster-dialog-title'
+            });
+            dialog.contentLayout.add_child(label);
 
-                const entry = new St.Entry({
-                    style_class: 'clipmaster-dialog-entry',
-                    hint_text: _('List name...'),
-                    can_focus: true
-                });
-                dialog.contentLayout.add_child(entry);
+            const entry = new St.Entry({
+                style_class: 'clipmaster-dialog-entry',
+                hint_text: _('List name...'),
+                can_focus: true
+            });
+            dialog.contentLayout.add_child(entry);
 
-                dialog.addButton({
-                    label: _('Cancel'),
-                    action: () => {
-                        debugLog('Dialog cancelled');
-                        dialog.close();
-                    },
-                    key: Clutter.KEY_Escape
-                });
+            dialog.addButton({
+                label: _('Cancel'),
+                action: () => {
+                    debugLog('Dialog cancelled');
+                    dialog.close();
+                },
+                key: Clutter.KEY_Escape
+            });
 
-                dialog.addButton({
-                    label: _('Create'),
-                    action: () => {
-                        const name = entry.get_text().trim();
-                        debugLog(`Creating list with name: ${name}`);
-                        if (name) {
-                            const listId = this._database.createList(name);
-                            debugLog(`List created with ID: ${listId}`);
-                            this._loadItems();
-                            Main.notify('ClipMaster', _('List created successfully'));
-                        } else {
-                            debugLog('List name is empty');
-                        }
-                        dialog.close();
-                    },
-                    default: true
-                });
+            dialog.addButton({
+                label: _('Create'),
+                action: () => {
+                    const name = entry.get_text().trim();
+                    debugLog(`Creating list with name: ${name}`);
+                    if (name) {
+                        const listId = this._database.createList(name);
+                        debugLog(`List created with ID: ${listId}`);
+                        this._loadItems();
+                        Main.notify('ClipMaster', _('List created successfully'));
+                    } else {
+                        debugLog('List name is empty');
+                    }
+                    dialog.close();
+                },
+                default: true
+            });
 
-                debugLog('Opening dialog...');
-                dialog.open();
-                entry.grab_key_focus();
-            } catch (e) {
-                console.error(`ClipMaster: Error showing create list dialog: ${e.message}`);
-                debugLog(`Dialog error: ${e.message}`);
-                Main.notify('ClipMaster', _('Error creating list dialog'));
-            }
+            debugLog('Opening dialog...');
+            dialog.open();
+            entry.grab_key_focus();
         }
 
         _showListsMenu() {
@@ -632,54 +622,49 @@ export const ClipboardPopup = GObject.registerClass(
                 (actor, event) => {
                     // ALWAYS propagate if popup is not in a valid showing state
                     // This prevents blocking input when the handler hasn't been cleaned up
-                    try {
-                        if (!this || this._signalManager === null) {
-                            return Clutter.EVENT_PROPAGATE;
+                    if (!this || this._signalManager === null) {
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+
+                    // Early exit checks - ALWAYS propagate if not showing
+                    if (!this._isShowing || !this.visible) {
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+
+                    // Also check if popup is off-screen (hidden state)
+                    const [posX, posY] = this.get_position();
+                    if (posX < -1000 || posY < -1000) {
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+
+                    const timeSinceShow = Date.now() - this._showTime;
+                    if (timeSinceShow < 1000) {
+                        debugLog(`Ignoring click during grace period (${timeSinceShow}ms since show)`);
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+
+                    if (this._isPinned) {
+                        debugLog(`Popup is pinned, ignoring outside click`);
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+
+                    const [clickX, clickY] = event.get_coords();
+                    const [popupX, popupY] = this.get_position();
+                    const [popupW, popupH] = this.get_size();
+
+                    const isInside = clickX >= popupX && clickX <= popupX + popupW &&
+                        clickY >= popupY && clickY <= popupY + popupH;
+
+                    if (isInside) {
+                        debugLog('Click is inside popup, allowing');
+                        return Clutter.EVENT_PROPAGATE;
+                    } else {
+                        debugLog('Click is outside popup, closing');
+                        if (this._extension && this._extension.hidePopup) {
+                            this._extension.hidePopup();
                         }
-
-                        // Early exit checks - ALWAYS propagate if not showing
-                        if (!this._isShowing || !this.visible) {
-                            return Clutter.EVENT_PROPAGATE;
-                        }
-
-                        // Also check if popup is off-screen (hidden state)
-                        const [posX, posY] = this.get_position();
-                        if (posX < -1000 || posY < -1000) {
-                            return Clutter.EVENT_PROPAGATE;
-                        }
-
-                        const timeSinceShow = Date.now() - this._showTime;
-                        if (timeSinceShow < 1000) {
-                            debugLog(`Ignoring click during grace period (${timeSinceShow}ms since show)`);
-                            return Clutter.EVENT_PROPAGATE;
-                        }
-
-                        if (this._isPinned) {
-                            debugLog(`Popup is pinned, ignoring outside click`);
-                            return Clutter.EVENT_PROPAGATE;
-                        }
-
-                        const [clickX, clickY] = event.get_coords();
-                        const [popupX, popupY] = this.get_position();
-                        const [popupW, popupH] = this.get_size();
-
-                        const isInside = clickX >= popupX && clickX <= popupX + popupW &&
-                            clickY >= popupY && clickY <= popupY + popupH;
-
-                        if (isInside) {
-                            debugLog('Click is inside popup, allowing');
-                            return Clutter.EVENT_PROPAGATE;
-                        } else {
-                            debugLog('Click is outside popup, closing');
-                            if (this._extension && this._extension.hidePopup) {
-                                this._extension.hidePopup();
-                            }
-                            // Don't block the click - let it through to the underlying window
-                            // The popup will close but the click should still register
-                            return Clutter.EVENT_PROPAGATE;
-                        }
-                    } catch (e) {
-                        debugLog(`Click outside handler error: ${e.message}`);
+                        // Don't block the click - let it through to the underlying window
+                        // The popup will close but the click should still register
                         return Clutter.EVENT_PROPAGATE;
                     }
                 },
@@ -689,49 +674,41 @@ export const ClipboardPopup = GObject.registerClass(
 
         _showConfirmDialog(message, onConfirm) {
             debugLog('_showConfirmDialog called');
-            try {
-                const dialog = new ModalDialog.ModalDialog({ styleClass: 'clipmaster-dialog' });
+            const dialog = new ModalDialog.ModalDialog({ styleClass: 'clipmaster-dialog' });
 
-                const messageLabel = new St.Label({
-                    text: message,
-                    style_class: 'clipmaster-confirm-dialog-message'
-                });
-                messageLabel.clutter_text.set_line_wrap(true);
-                messageLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
-                messageLabel.set_width(400);
+            const messageLabel = new St.Label({
+                text: message,
+                style_class: 'clipmaster-confirm-dialog-message'
+            });
+            messageLabel.clutter_text.set_line_wrap(true);
+            messageLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
+            messageLabel.set_width(400);
 
-                dialog.contentLayout.add_child(messageLabel);
+            dialog.contentLayout.add_child(messageLabel);
 
-                dialog.addButton({
-                    label: _('Cancel'),
-                    action: () => {
-                        debugLog('Delete dialog cancelled');
-                        dialog.close();
-                    },
-                    key: Clutter.KEY_Escape
-                });
+            dialog.addButton({
+                label: _('Cancel'),
+                action: () => {
+                    debugLog('Delete dialog cancelled');
+                    dialog.close();
+                },
+                key: Clutter.KEY_Escape
+            });
 
-                dialog.addButton({
-                    label: _('Delete'),
-                    action: () => {
-                        debugLog('Delete confirmed');
-                        dialog.close();
-                        if (onConfirm) {
-                            onConfirm();
-                        }
-                    },
-                    default: true
-                });
+            dialog.addButton({
+                label: _('Delete'),
+                action: () => {
+                    debugLog('Delete confirmed');
+                    dialog.close();
+                    if (onConfirm) {
+                        onConfirm();
+                    }
+                },
+                default: true
+            });
 
-                debugLog('Opening delete confirmation dialog...');
-                dialog.open();
-            } catch (e) {
-                console.error(`ClipMaster: Error showing confirm dialog: ${e.message}`);
-                debugLog(`Confirm dialog error: ${e.message}`);
-                if (onConfirm) {
-                    onConfirm();
-                }
-            }
+            debugLog('Opening delete confirmation dialog...');
+            dialog.open();
         }
 
         _setFilter(listId, type = null) {
@@ -895,6 +872,7 @@ export const ClipboardPopup = GObject.registerClass(
         }
 
         destroy() {
+            this._clearItemTimeouts();
             this.dispose_resources();
             super.destroy();
         }

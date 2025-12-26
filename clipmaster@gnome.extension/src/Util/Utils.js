@@ -153,12 +153,8 @@ export class FileUtils {
     }
 
     static fileExists(path) {
-        try {
-            const file = Gio.File.new_for_path(path);
-            return file.query_exists(null);
-        } catch (e) {
-            return false;
-        }
+        const file = Gio.File.new_for_path(path);
+        return file.query_exists(null);
     }
 }
 
@@ -182,13 +178,9 @@ export class SettingsCache {
             return this._cache.get(key);
         }
 
-        try {
-            const value = this._settings.get_boolean(key);
-            this._cache.set(key, value);
-            return value;
-        } catch (e) {
-            return defaultValue;
-        }
+        const value = this._settings.get_boolean(key);
+        this._cache.set(key, value);
+        return value;
     }
 
     getInt(key, defaultValue = 0) {
@@ -196,13 +188,9 @@ export class SettingsCache {
             return this._cache.get(key);
         }
 
-        try {
-            const value = this._settings.get_int(key);
-            this._cache.set(key, value);
-            return value;
-        } catch (e) {
-            return defaultValue;
-        }
+        const value = this._settings.get_int(key);
+        this._cache.set(key, value);
+        return value;
     }
 
     getString(key, defaultValue = '') {
@@ -210,13 +198,9 @@ export class SettingsCache {
             return this._cache.get(key);
         }
 
-        try {
-            const value = this._settings.get_string(key);
-            this._cache.set(key, value);
-            return value;
-        } catch (e) {
-            return defaultValue;
-        }
+        const value = this._settings.get_string(key);
+        this._cache.set(key, value);
+        return value;
     }
 
     clear() {
