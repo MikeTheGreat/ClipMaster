@@ -16,7 +16,7 @@
     "gettext-domain": "clipmaster",
     "donations": {
         "github": "sfnemis",
-        "ko-fi": "https://ko-fi.com/sfnemis",
-        "buymeacoffee": "https://buymeacoffee.com/sfnemis"
+        "kofi": "sfnemis",
+        "buymeacoffee": "sfnemis"
     }
 }
