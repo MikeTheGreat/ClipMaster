@@ -94,19 +94,11 @@ export default class ClipMasterExtension extends Extension {
 
             // Remove from chrome before destroying
             if (this._popupAddedToChrome) {
-                try {
-                    Main.layoutManager.removeChrome(this._popup);
-                } catch (e) {
-                    // Ignore removal errors during disable
-                }
+                Main.layoutManager.removeChrome(this._popup);
                 this._popupAddedToChrome = false;
             }
 
-            try {
-                this._popup.destroy();
-            } catch (e) {
-                // Ignore destruction errors
-            }
+            this._popup.destroy();
             this._popup = null;
         }
 
@@ -280,6 +272,11 @@ export default class ClipMasterExtension extends Extension {
 
             this._popup._isShowing = false;
             this._popup.hide();
+
+            // Close indicator menu to signal Dash to Panel that menu is closed
+            if (this._indicator?.menu) {
+                this._indicator.menu.close();
+            }
 
             // Remove from chrome when hidden to prevent any input interference
             if (this._popupAddedToChrome) {

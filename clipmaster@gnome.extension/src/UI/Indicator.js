@@ -38,6 +38,10 @@ export const ClipMasterIndicator = GObject.registerClass(
                 const button = event.get_button();
 
                 if (button === 1) {
+                    // Signal to panel extensions (like Dash to Panel) that a menu is open
+                    // This prevents auto-hide from triggering when showing our custom popup
+                    this.menu.open();
+                    this.menu.actor.visible = false;
                     this._extension.togglePopup();
                     return Clutter.EVENT_STOP;
                 } else if (button === 3) {
