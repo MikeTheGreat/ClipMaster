@@ -8,6 +8,7 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 
@@ -139,11 +140,24 @@ export default class ClipMasterExtension extends Extension {
             Shell.ActionMode.ALL,
             this._pasteAsPlain.bind(this)
         );
+
+        for (let i = 1; i <= 10; i++) {
+            const index = i - 1;
+            Main.wm.addKeybinding(
+                `paste-item-${i}`,
+                this._settings,
+                Meta.KeyBindingFlags.NONE,
+                Shell.ActionMode.ALL,
+                () => this._pasteItem(index)
+            );
+        }
     }
 
     _unbindShortcuts() {
         Main.wm.removeKeybinding('toggle-popup');
         Main.wm.removeKeybinding('paste-as-plain');
+        for (let i = 1; i <= 10; i++)
+            Main.wm.removeKeybinding(`paste-item-${i}`);
     }
 
     _onNewItem(itemId) {
@@ -309,5 +323,29 @@ export default class ClipMasterExtension extends Extension {
         if (items.length > 0) {
             this._monitor.copyToClipboard(items[0].plainText, true);
         }
+    }
+
+    _pasteItem(index) {
+        const items = this._database.getItems({ limit: index + 1 });
+        if (items.length <= index)
+            return;
+
+        const item = items[index];
+        this._monitor.copyToClipboard(item.content || item.plainText);
+
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+            try {
+                const seat = Clutter.get_default_backend().get_default_seat();
+                const vkbd = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+                const time = GLib.get_monotonic_time();
+                vkbd.notify_keyval(time, Clutter.KEY_Control_L, Clutter.KeyState.PRESSED);
+                vkbd.notify_keyval(time, Clutter.KEY_v, Clutter.KeyState.PRESSED);
+                vkbd.notify_keyval(time + 1, Clutter.KEY_v, Clutter.KeyState.RELEASED);
+                vkbd.notify_keyval(time + 2, Clutter.KEY_Control_L, Clutter.KeyState.RELEASED);
+            } catch (e) {
+                debugLog(`_pasteItem simulate error: ${e.message}`);
+            }
+            return GLib.SOURCE_REMOVE;
+        });
     }
 }

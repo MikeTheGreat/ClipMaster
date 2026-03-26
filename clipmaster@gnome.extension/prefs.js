@@ -22,6 +22,7 @@
 
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
+import Gdk from 'gi://Gdk';
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import GLib from 'gi://GLib';
@@ -224,6 +225,20 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
         });
         behaviorPage.add(appearanceGroup);
 
+        // Font size
+        const fontSizeRow = new Adw.SpinRow({
+            title: _('Font Size'),
+            subtitle: _('Base font size for clipboard items (px)'),
+            adjustment: new Gtk.Adjustment({
+                lower: 8,
+                upper: 24,
+                step_increment: 1,
+                page_increment: 2
+            })
+        });
+        settings.bind('font-size', fontSizeRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        appearanceGroup.add(fontSizeRow);
+
         // Follow system theme toggle
         const followSystemRow = new Adw.SwitchRow({
             title: _('Follow System Theme'),
@@ -406,6 +421,24 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
             _('Paste clipboard content without formatting')
         );
         shortcutsGroup.add(pastePlainRow);
+
+        // Quick Paste Group
+        const quickPasteGroup = new Adw.PreferencesGroup({
+            title: _('Quick Paste'),
+            description: _('Paste a clipboard item directly by position, without opening the popup')
+        });
+        shortcutsPage.add(quickPasteGroup);
+
+        const ordinals = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+        for (let i = 1; i <= 10; i++) {
+            const row = this._createShortcutRow(
+                settings,
+                `paste-item-${i}`,
+                _(`Paste Item ${i}`),
+                _(`Paste the ${ordinals[i - 1]} most recent item`)
+            );
+            quickPasteGroup.add(row);
+        }
 
         // Storage Page
         const storagePage = new Adw.PreferencesPage({
@@ -791,59 +824,101 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
     }
 
     _createShortcutRow(settings, key, title, subtitle) {
-        const row = new Adw.ActionRow({
-            title: title,
-            subtitle: subtitle
-        });
+        const row = new Adw.ActionRow({ title, subtitle });
 
         const shortcuts = settings.get_strv(key);
-        const label = new Gtk.Label({
-            label: shortcuts.length > 0 ? shortcuts[0] : _('Disabled'),
-            css_classes: ['dim-label'],
+        const shortcutLabel = new Gtk.ShortcutLabel({
+            accelerator: shortcuts.length > 0 ? shortcuts[0] : '',
+            disabled_text: _('Disabled'),
             valign: Gtk.Align.CENTER
         });
-        row.add_suffix(label);
+        row.add_suffix(shortcutLabel);
+
+        settings.connect(`changed::${key}`, () => {
+            const updated = settings.get_strv(key);
+            shortcutLabel.accelerator = updated.length > 0 ? updated[0] : '';
+        });
 
         const editButton = new Gtk.Button({
             icon_name: 'document-edit-symbolic',
-            valign: Gtk.Align.CENTER
+            valign: Gtk.Align.CENTER,
+            tooltip_text: _('Edit shortcut')
         });
         editButton.connect('clicked', () => {
-            // Simple dialog to change shortcut
-            const dialog = new Gtk.MessageDialog({
-                transient_for: row.get_root(),
-                modal: true,
-                message_type: Gtk.MessageType.QUESTION,
-                buttons: Gtk.ButtonsType.OK_CANCEL,
-                text: _('Enter new shortcut'),
-                secondary_text: _('Example: <Super>v, <Ctrl><Shift>v')
-            });
-
-            const entry = new Gtk.Entry({
-                text: shortcuts.length > 0 ? shortcuts[0] : '',
-                margin_top: 10,
-                margin_bottom: 10,
-                margin_start: 10,
-                margin_end: 10
-            });
-            dialog.get_content_area().append(entry);
-
-            dialog.connect('response', (dialog, response) => {
-                if (response === Gtk.ResponseType.OK) {
-                    const newShortcut = entry.get_text();
-                    if (newShortcut) {
-                        settings.set_strv(key, [newShortcut]);
-                        label.set_label(newShortcut);
-                    }
-                }
-                dialog.destroy();
-            });
-
-            dialog.show();
+            this._showShortcutCaptureDialog(row.get_root(), settings, key);
         });
         row.add_suffix(editButton);
 
+        const clearButton = new Gtk.Button({
+            icon_name: 'edit-clear-symbolic',
+            valign: Gtk.Align.CENTER,
+            tooltip_text: _('Disable shortcut')
+        });
+        clearButton.connect('clicked', () => {
+            settings.set_strv(key, []);
+        });
+        row.add_suffix(clearButton);
+
         return row;
+    }
+
+    _showShortcutCaptureDialog(parent, settings, key) {
+        const dialog = new Adw.AlertDialog({
+            heading: _('Set Keyboard Shortcut'),
+            body: _('Press the desired key combination, then click Set.')
+        });
+
+        dialog.add_response('cancel', _('Cancel'));
+        dialog.add_response('set', _('Set'));
+        dialog.set_response_appearance('set', Adw.ResponseAppearance.SUGGESTED);
+        dialog.set_default_response('set');
+        dialog.set_close_response('cancel');
+
+        let capturedAccel = '';
+
+        const captureLabel = new Gtk.ShortcutLabel({
+            accelerator: '',
+            disabled_text: _('Waiting for input…'),
+            halign: Gtk.Align.CENTER,
+            margin_top: 12,
+            margin_bottom: 4
+        });
+        dialog.set_extra_child(captureLabel);
+
+        const keyController = new Gtk.EventControllerKey();
+        keyController.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
+        keyController.connect('key-pressed', (_ctrl, keyval, _keycode, state) => {
+            const mods = state & Gtk.accelerator_get_default_mod_mask();
+
+            // Ignore standalone modifier keys
+            if ([
+                Gdk.KEY_Control_L, Gdk.KEY_Control_R,
+                Gdk.KEY_Shift_L, Gdk.KEY_Shift_R,
+                Gdk.KEY_Alt_L, Gdk.KEY_Alt_R,
+                Gdk.KEY_Super_L, Gdk.KEY_Super_R,
+                Gdk.KEY_Hyper_L, Gdk.KEY_Hyper_R,
+                Gdk.KEY_Meta_L, Gdk.KEY_Meta_R,
+            ].includes(keyval)) return false;
+
+            if (keyval === Gdk.KEY_Escape && !mods) {
+                dialog.close();
+                return true;
+            }
+
+            if (Gtk.accelerator_valid(keyval, mods)) {
+                capturedAccel = Gtk.accelerator_name(keyval, mods);
+                captureLabel.accelerator = capturedAccel;
+            }
+            return true;
+        });
+        dialog.add_controller(keyController);
+
+        dialog.connect('response', (_d, response) => {
+            if (response === 'set' && capturedAccel)
+                settings.set_strv(key, [capturedAccel]);
+        });
+
+        dialog.present(parent);
     }
 
     _exportData(window, settings) {

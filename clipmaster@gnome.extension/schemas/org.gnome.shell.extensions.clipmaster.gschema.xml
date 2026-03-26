@@ -14,7 +14,67 @@
       <summary>Paste as plain text</summary>
       <description>Keyboard shortcut to paste clipboard as plain text</description>
     </key>
-    
+
+    <key name="paste-item-1" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;1']</default>
+      <summary>Paste item 1</summary>
+      <description>Paste the 1st most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-2" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;2']</default>
+      <summary>Paste item 2</summary>
+      <description>Paste the 2nd most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-3" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;3']</default>
+      <summary>Paste item 3</summary>
+      <description>Paste the 3rd most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-4" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;4']</default>
+      <summary>Paste item 4</summary>
+      <description>Paste the 4th most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-5" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;5']</default>
+      <summary>Paste item 5</summary>
+      <description>Paste the 5th most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-6" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;6']</default>
+      <summary>Paste item 6</summary>
+      <description>Paste the 6th most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-7" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;7']</default>
+      <summary>Paste item 7</summary>
+      <description>Paste the 7th most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-8" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;8']</default>
+      <summary>Paste item 8</summary>
+      <description>Paste the 8th most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-9" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;9']</default>
+      <summary>Paste item 9</summary>
+      <description>Paste the 9th most recent clipboard item</description>
+    </key>
+
+    <key name="paste-item-10" type="as">
+      <default>['&lt;Super&gt;&lt;Alt&gt;0']</default>
+      <summary>Paste item 10</summary>
+      <description>Paste the 10th most recent clipboard item</description>
+    </key>
+
     <!-- History Settings -->
     <key name="history-size" type="i">
       <default>100</default>
@@ -173,6 +233,13 @@
       <default>'adwaita'</default>
       <summary>Theme</summary>
       <description>Visual theme for the popup. Options: adwaita, catppuccin, dracula, nord, gruvbox, onedark, monokai, solarized, tokyonight, rosepine, material, ayu</description>
+    </key>
+
+    <key name="font-size" type="i">
+      <default>13</default>
+      <range min="8" max="24"/>
+      <summary>Font size</summary>
+      <description>Base font size for clipboard items in the popup (in pixels)</description>
     </key>
     
     <key name="follow-system-theme" type="b">

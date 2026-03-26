@@ -104,6 +104,12 @@ export const ClipboardPopup = GObject.registerClass(
                 () => this._applyTheme(),
                 'system-theme-changed'
             );
+            this._signalManager.connect(
+                this._settings,
+                'changed::font-size',
+                () => this._loadItems(),
+                'font-size-changed'
+            );
 
             this._buildUI();
             this._connectSignals();
@@ -191,7 +197,7 @@ export const ClipboardPopup = GObject.registerClass(
             this._header.add_child(headerIcon);
 
             const title = new St.Label({
-                text: 'ClipMaster',
+                text: 'ClipMaster-Mike',
                 style_class: 'clipmaster-title',
                 x_expand: true,
                 x_align: Clutter.ActorAlign.START
@@ -271,6 +277,23 @@ export const ClipboardPopup = GObject.registerClass(
             });
             this._header.add_child(this._addListButton);
 
+            this._settingsButton = new St.Button({
+                style_class: 'clipmaster-toggle-button',
+                child: new St.Icon({
+                    icon_name: 'preferences-system-symbolic',
+                    icon_size: 16
+                }),
+                can_focus: false,
+                track_hover: true
+            });
+            this._settingsButton._tooltipText = _('Preferences');
+            this._settingsButton.connect('notify::hover', (btn) => this._onButtonHover(btn));
+            this._settingsButton.connect('button-press-event', () => {
+                this._extension.openPreferences();
+                return Clutter.EVENT_STOP;
+            });
+            this._header.add_child(this._settingsButton);
+
             this._closeButton = new St.Button({
                 style_class: 'clipmaster-close-button',
                 child: new St.Icon({
@@ -310,10 +333,12 @@ export const ClipboardPopup = GObject.registerClass(
                     source === this._pinButton ||
                     source === this._plainTextButton ||
                     source === this._addListButton ||
+                    source === this._settingsButton ||
                     parent === this._closeButton ||
                     parent === this._pinButton ||
                     parent === this._plainTextButton ||
-                    parent === this._addListButton) {
+                    parent === this._addListButton ||
+                    parent === this._settingsButton) {
                     debugLog(`Clicked on button, not starting drag`);
                     return Clutter.EVENT_PROPAGATE;
                 }
@@ -341,7 +366,7 @@ export const ClipboardPopup = GObject.registerClass(
             });
             this._searchEntry.clutter_text.connect('activate', () => {
                 debugLog('Search entry activated (Enter pressed)');
-                this._pasteSelected();
+                this._pasteSelected(true);
                 return Clutter.EVENT_STOP;
             });
 
@@ -510,12 +535,29 @@ export const ClipboardPopup = GObject.registerClass(
         _showListsMenu() {
             const lists = this._database.getLists();
 
+            const menu = new PopupMenu.PopupMenu(this._listsButton, 0.0, St.Side.TOP);
+
+            // "All Items" always appears at the top as the default/home view
+            const allItem = new PopupMenu.PopupMenuItem(_('All Items (Default)'));
+            allItem.connect('activate', () => {
+                this._setFilter(null);
+            });
+            menu.addMenuItem(allItem);
+
             if (lists.length === 0) {
-                Main.notify('ClipMaster', _('No custom lists. Click + to create one.'));
+                menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+                const emptyItem = new PopupMenu.PopupMenuItem(_('No lists yet. Click + to create one.'), { reactive: false });
+                menu.addMenuItem(emptyItem);
+                Main.uiGroup.add_child(menu.actor);
+                menu.open();
+                menu.connect('open-state-changed', (menu, open) => {
+                    if (!open) menu.destroy();
+                });
                 return;
             }
 
-            const menu = new PopupMenu.PopupMenu(this._listsButton, 0.0, St.Side.TOP);
+            menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
             const pinnedLists = this._settings.get_strv('pinned-lists') || [];
 
             lists.forEach(list => {
@@ -1158,7 +1200,7 @@ export const ClipboardPopup = GObject.registerClass(
                     this._updateSelection();
                     debugLog(`Single click on row ${index}, selecting and pasting...`);
                     this._pasteFromHover = false;
-                    this._pasteSelected();
+                    this._pasteSelected(true);
                     return Clutter.EVENT_STOP;
                 } else if (event.get_button() === 3) {
                     this._selectedIndex = index;
@@ -1236,10 +1278,13 @@ export const ClipboardPopup = GObject.registerClass(
                 }
             });
 
+            const baseFontSize = this._settings.get_int('font-size');
+
             if (index < 9) {
                 const numLabel = new St.Label({
                     text: (index + 1).toString(),
-                    style_class: 'clipmaster-item-number'
+                    style_class: 'clipmaster-item-number',
+                    style: `font-size: ${Math.max(8, baseFontSize - 2)}px;`
                 });
                 row.add_child(numLabel);
             } else {
@@ -1265,6 +1310,7 @@ export const ClipboardPopup = GObject.registerClass(
                 const titleLabel = new St.Label({
                     text: item.title,
                     style_class: 'clipmaster-item-title',
+                    style: `font-size: ${baseFontSize}px;`,
                     x_expand: true,
                     x_align: Clutter.ActorAlign.START
                 });
@@ -1314,9 +1360,13 @@ export const ClipboardPopup = GObject.registerClass(
             }
             previewText = previewText.replace(/\n/g, ' ').trim();
 
+            const previewFontSize = item.title
+                ? Math.max(8, baseFontSize - 2)
+                : Math.max(8, baseFontSize - 1);
             const previewLabel = new St.Label({
                 text: previewText,
                 style_class: item.title ? 'clipmaster-item-preview dim' : 'clipmaster-item-preview',
+                style: `font-size: ${previewFontSize}px;`,
                 x_expand: true,
                 x_align: Clutter.ActorAlign.START
             });
@@ -1352,6 +1402,7 @@ export const ClipboardPopup = GObject.registerClass(
                 const timeLabel = new St.Label({
                     text: timeText,
                     style_class: 'clipmaster-item-time',
+                    style: `font-size: ${Math.max(8, baseFontSize - 3)}px;`,
                     x_expand: true,
                     x_align: Clutter.ActorAlign.START
                 });
@@ -1445,7 +1496,7 @@ export const ClipboardPopup = GObject.registerClass(
             });
         }
 
-        _pasteSelected() {
+        _pasteSelected(simulate = false) {
             debugLog(`=== _pasteSelected() CALLED ===`);
             debugLog(`Items length: ${this._items.length}, selectedIndex: ${this._selectedIndex}`);
 
@@ -1487,7 +1538,29 @@ export const ClipboardPopup = GObject.registerClass(
                 debugLog(`NOT closing popup (close-on-paste=${closeOnPaste}, pinned=${this._isPinned}, isFromHover=${isFromHover})`);
             }
 
+            if (simulate) {
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 150, () => {
+                    this._simulatePaste();
+                    return GLib.SOURCE_REMOVE;
+                });
+            }
+
             debugLog(`=== _pasteSelected() COMPLETED ===`);
+        }
+
+        _simulatePaste() {
+            try {
+                const seat = Clutter.get_default_backend().get_default_seat();
+                const vkbd = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+                const time = GLib.get_monotonic_time();
+                vkbd.notify_keyval(time, Clutter.KEY_Control_L, Clutter.KeyState.PRESSED);
+                vkbd.notify_keyval(time, Clutter.KEY_v, Clutter.KeyState.PRESSED);
+                vkbd.notify_keyval(time + 1, Clutter.KEY_v, Clutter.KeyState.RELEASED);
+                vkbd.notify_keyval(time + 2, Clutter.KEY_Control_L, Clutter.KeyState.RELEASED);
+                debugLog('Simulated Ctrl+V paste');
+            } catch (e) {
+                debugLog(`_simulatePaste error: ${e.message}`);
+            }
         }
 
         _showContextMenu(item, row) {
@@ -1727,7 +1800,7 @@ export const ClipboardPopup = GObject.registerClass(
             }
 
             if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter) {
-                this._pasteSelected();
+                this._pasteSelected(true);
                 return Clutter.EVENT_STOP;
             }
 
@@ -1805,7 +1878,7 @@ export const ClipboardPopup = GObject.registerClass(
                     const index = symbol - Clutter.KEY_1;
                     if (index < this._items.length) {
                         this._selectedIndex = index;
-                        this._pasteSelected();
+                        this._pasteSelected(true);
                     }
                     return Clutter.EVENT_STOP;
                 }
