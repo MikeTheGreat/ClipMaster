@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:gitlab.gnome.org)",
+      "WebFetch(domain:wiki.gnome.org)",
+      "WebFetch(domain:gjs.guide)"
+    ]
+  }
+}

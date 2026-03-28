@@ -1,7 +1,7 @@
 #!/bin/bash
 # ClipMaster GNOME Extension Uninstaller
 
-EXTENSION_UUID="clipmaster@gnome.extension"
+EXTENSION_UUID="ClipMasterMike@gnome.extension"
 EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
 DATA_DIR="$HOME/.local/share/clipmaster"
 

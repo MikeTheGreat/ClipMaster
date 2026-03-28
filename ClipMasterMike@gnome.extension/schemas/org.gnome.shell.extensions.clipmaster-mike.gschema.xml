@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.clipmaster" path="/org/gnome/shell/extensions/clipmaster/">
+  <schema id="org.gnome.shell.extensions.clipmaster-mike" path="/org/gnome/shell/extensions/clipmaster-mike/">
     
     <!-- Keyboard Shortcuts -->
     <key name="toggle-popup" type="as">

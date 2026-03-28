@@ -3,7 +3,7 @@
 
 set -e
 
-EXTENSION_UUID="clipmaster@gnome.extension"
+EXTENSION_UUID="ClipMasterMike@gnome.extension"
 EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
 SOURCE_DIR="$(dirname "$(readlink -f "$0")")/$EXTENSION_UUID"
 
@@ -40,7 +40,7 @@ if [ -d "$SOURCE_DIR" ]; then
     cp -r "$SOURCE_DIR"/* "$EXTENSION_DIR/"
 else
     # Fallback if running from root of repo
-    cp -r clipmaster@gnome.extension/* "$EXTENSION_DIR/"
+    cp -r ClipMasterMike@gnome.extension/* "$EXTENSION_DIR/"
 fi
 
 # Compile schemas

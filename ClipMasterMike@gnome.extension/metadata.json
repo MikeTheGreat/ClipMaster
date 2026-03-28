@@ -1,5 +1,5 @@
 {
-    "uuid": "clipmaster@gnome.extension",
+    "uuid": "ClipMasterMike@gnome.extension",
     "name": "ClipMaster",
     "description": "ClipMaster is a clipboard manager with history, image support, favorites, and optional themes. Follows system dark/light preference by default.",
     "version": 9,
@@ -12,7 +12,7 @@
         "49"
     ],
     "url": "https://github.com/sfnemis/ClipMaster",
-    "settings-schema": "org.gnome.shell.extensions.clipmaster",
+    "settings-schema": "org.gnome.shell.extensions.clipmaster-mike",
     "gettext-domain": "clipmaster",
     "donations": {
         "github": "sfnemis",

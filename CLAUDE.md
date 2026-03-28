@@ -1,6 +1,6 @@
 d# ClipMaster - GNOME Shell Extension
 
-Clipboard manager extension. UUID: `clipmaster@gnome.extension`, version 1.3.1.
+Clipboard manager extension. UUID: `ClipMasterMike@gnome.extension`, version 1.3.1.
 
 ## Structure
 
