@@ -28,13 +28,13 @@ if [ "$GNOME_VERSION" -lt 45 ]; then
 fi
 
 echo ""
-echo "Installing ClipMaster extension..."
+echo "Installing ClipMaster extension to:"
+echo "    $EXTENSION_DIR"
 
 # Create extension directory
 mkdir -p "$EXTENSION_DIR"
 
 # Copy files
-echo "→ Copying extension files..."
 echo "→ Copying extension files..."
 if [ -d "$SOURCE_DIR" ]; then
     cp -r "$SOURCE_DIR"/* "$EXTENSION_DIR/"

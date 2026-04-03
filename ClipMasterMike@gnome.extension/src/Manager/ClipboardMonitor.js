@@ -117,6 +117,12 @@ export class ClipboardMonitor {
         this._signalManager.disconnect('primary-selection-owner-changed');
     }
 
+    checkNow() {
+        // Cancel any pending debounced check and run immediately
+        this._timeoutManager.remove('clipboard-check');
+        this._checkClipboard();
+    }
+
     stop() {
         this._isStopped = true;
 

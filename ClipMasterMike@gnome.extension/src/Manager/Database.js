@@ -424,6 +424,9 @@ export class ClipboardDatabase {
             );
         }
 
+        // Sort newest first (most recently used/created at top)
+        items.sort((a, b) => (b.lastUsed || b.created || 0) - (a.lastUsed || a.created || 0));
+
         if (options.limit) {
             items = items.slice(0, options.limit);
         }

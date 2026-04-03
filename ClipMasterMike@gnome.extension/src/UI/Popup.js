@@ -197,7 +197,7 @@ export const ClipboardPopup = GObject.registerClass(
             this._header.add_child(headerIcon);
 
             const title = new St.Label({
-                text: 'ClipMaster-Mike',
+                text: 'ClipMaster-Mike-3',
                 style_class: 'clipmaster-title',
                 x_expand: true,
                 x_align: Clutter.ActorAlign.START
@@ -978,11 +978,29 @@ export const ClipboardPopup = GObject.registerClass(
             this._searchEntry.set_text('');
             this._searchQuery = '';
             this._selectedIndex = 0;
-            this._currentListId = null;
-            this._currentType = null;
             this._plainTextMode = false;
 
-            this._loadItems();
+            // Cancel any pending debounced clipboard check and run it now,
+            // so the current clipboard content is captured before we load items.
+            if (this._monitor) {
+                this._monitor.checkNow();
+            }
+
+            this._setFilter(this._currentListId, this._currentType);
+
+            // Schedule a refresh after the async clipboard check has time to complete,
+            // ensuring the current clipboard item appears first even in race conditions.
+            this._timeoutManager.add(
+                GLib.PRIORITY_DEFAULT,
+                150,
+                () => {
+                    if (this._isShowing) {
+                        this._loadItems();
+                    }
+                    return GLib.SOURCE_REMOVE;
+                },
+                'show-clipboard-refresh'
+            );
 
             this.visible = true;
             this.opacity = 255;
