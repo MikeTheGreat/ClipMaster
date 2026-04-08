@@ -1,5 +1,6 @@
 # Compiled schemas (auto-generated)
 ClipMasterMike@gnome.extension/schemas/gschemas.compiled
+.claude-conversations/*
 
 # Extension zip files
 *.zip

@@ -118,7 +118,7 @@
     </key>
     
     <key name="track-primary-selection" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Track Primary Selection</summary>
       <description>Track PRIMARY selection (middle mouse button paste). Options: true=both, false=CLIPBOARD only</description>
     </key>
