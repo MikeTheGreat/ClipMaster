@@ -49,6 +49,13 @@ if [ -d "$EXTENSION_DIR/schemas" ]; then
     glib-compile-schemas "$EXTENSION_DIR/schemas/"
 fi
 
+# Install schema to user glib-2.0 path so 'gsettings' CLI works
+echo "→ Installing GSettings schema for CLI access..."
+GLIB_SCHEMA_DIR="$HOME/.local/share/glib-2.0/schemas"
+mkdir -p "$GLIB_SCHEMA_DIR"
+cp "$EXTENSION_DIR/schemas/"*.gschema.xml "$GLIB_SCHEMA_DIR/"
+glib-compile-schemas "$GLIB_SCHEMA_DIR/"
+
 echo ""
 echo "✅ Installation complete!"
 echo ""
