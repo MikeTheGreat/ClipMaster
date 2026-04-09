@@ -34,8 +34,10 @@ export class SignalManager {
         if (!connections) return;
 
         connections.forEach(({ object, handlerId }) => {
-            if (object && object.handler_is_connected && object.handler_is_connected(handlerId)) {
+            try {
                 object.disconnect(handlerId);
+            } catch (e) {
+                // Handler may already be disconnected
             }
         });
 

@@ -4,7 +4,9 @@
       "WebSearch",
       "WebFetch(domain:gitlab.gnome.org)",
       "WebFetch(domain:wiki.gnome.org)",
-      "WebFetch(domain:gjs.guide)"
+      "WebFetch(domain:gjs.guide)",
+      "Bash(gsettings get:*)",
+      "Bash(gsettings list-schemas:*)"
     ]
   }
 }
