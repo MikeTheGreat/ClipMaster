@@ -996,6 +996,8 @@ export const ClipboardPopup = GObject.registerClass(
                 () => {
                     if (this._isShowing) {
                         this._loadItems();
+                        if (this._scrollView && this._scrollView.vadjustment)
+                            this._scrollView.vadjustment.value = 0;
                     }
                     return GLib.SOURCE_REMOVE;
                 },
@@ -1006,6 +1008,10 @@ export const ClipboardPopup = GObject.registerClass(
             this.opacity = 255;
             this.reactive = true;
             this._showTime = Date.now();
+
+            // Scroll to top so the most recent items are visible
+            if (this._scrollView && this._scrollView.vadjustment)
+                this._scrollView.vadjustment.value = 0;
 
             debugLog(`Popup shown at ${this._showTime}`);
 
