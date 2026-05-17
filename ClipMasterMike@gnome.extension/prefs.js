@@ -932,9 +932,11 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
     }
 
     _exportData(window, settings) {
+        const now = GLib.DateTime.new_now_local();
+        const dateStr = now.format('%Y-%m-%d');
         const dialog = new Gtk.FileDialog({
             title: _('Export Clipboard Data'),
-            initial_name: 'clipmaster_export.json'
+            initial_name: `clipmaster_export_${dateStr}.json`
         });
 
         dialog.save(window, null, (dialog, result) => {
