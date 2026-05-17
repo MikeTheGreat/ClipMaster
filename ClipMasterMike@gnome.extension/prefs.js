@@ -796,6 +796,16 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
             subtitle: _('journalctl -f /usr/bin/gnome-shell')
         });
         debugGroup.add(logInfoRow);
+
+        const keyController = new Gtk.EventControllerKey();
+        keyController.connect('key-pressed', (_ctrl, keyval) => {
+            if (keyval === Gdk.KEY_Escape) {
+                window.close();
+                return true;
+            }
+            return false;
+        });
+        window.add_controller(keyController);
     }
 
     _browseStorageDirectory(window, settings, pathRow, useCustomRow) {

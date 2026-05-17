@@ -1463,6 +1463,63 @@ export const ClipboardPopup = GObject.registerClass(
                 row.add_child(qrButton);
             }
 
+            if (this._currentListId && this._currentListId > 0) {
+                const moveBox = new St.BoxLayout({
+                    vertical: true,
+                    style_class: 'clipmaster-move-box'
+                });
+
+                const moveUpBtn = new St.Button({
+                    style_class: 'clipmaster-move-button',
+                    child: new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 11 }),
+                    can_focus: false,
+                    reactive: true,
+                    track_hover: true
+                });
+                moveUpBtn.connect('button-press-event', (actor, event) => {
+                    if (event.get_button() === 1) {
+                        const moved = this._database.moveItemInList(this._currentListId, item.id, 'up');
+                        if (moved) {
+                            this._loadItems();
+                            const newIdx = this._items.findIndex(i => i.id === item.id);
+                            if (newIdx >= 0) {
+                                this._selectedIndex = newIdx;
+                                this._updateSelection();
+                            }
+                        }
+                        return Clutter.EVENT_STOP;
+                    }
+                    return Clutter.EVENT_PROPAGATE;
+                });
+
+                const moveDownBtn = new St.Button({
+                    style_class: 'clipmaster-move-button',
+                    child: new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 11 }),
+                    can_focus: false,
+                    reactive: true,
+                    track_hover: true
+                });
+                moveDownBtn.connect('button-press-event', (actor, event) => {
+                    if (event.get_button() === 1) {
+                        const moved = this._database.moveItemInList(this._currentListId, item.id, 'down');
+                        if (moved) {
+                            this._loadItems();
+                            const newIdx = this._items.findIndex(i => i.id === item.id);
+                            if (newIdx >= 0) {
+                                this._selectedIndex = newIdx;
+                                this._updateSelection();
+                            }
+                        }
+                        return Clutter.EVENT_STOP;
+                    }
+                    return Clutter.EVENT_PROPAGATE;
+                });
+
+                moveBox.add_child(moveUpBtn);
+                moveBox.add_child(moveDownBtn);
+                row.add_child(moveBox);
+            }
+
             const favButton = new St.Button({
                 style_class: 'clipmaster-fav-button',
                 can_focus: false,

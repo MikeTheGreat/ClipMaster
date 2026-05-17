@@ -23,6 +23,7 @@ export class ClipboardDatabase {
 
         this._items = [];
         this._lists = [];
+        this._listPositions = {};
         this._nextId = 1;
         this._isDirty = false;
 
@@ -122,6 +123,7 @@ export class ClipboardDatabase {
                 }
 
                 this._lists = data.lists || [];
+                this._listPositions = data.listPositions || {};
                 this._nextId = Math.max(data.nextId || 1, this._nextId);
             }
             this._isLoaded = true;
@@ -173,6 +175,7 @@ export class ClipboardDatabase {
             const data = {
                 items: this._items,
                 lists: this._lists,
+                listPositions: this._listPositions,
                 nextId: this._nextId
             };
 
@@ -424,8 +427,20 @@ export class ClipboardDatabase {
             );
         }
 
-        // Sort newest first (most recently used/created at top)
-        items.sort((a, b) => (b.lastUsed || b.created || 0) - (a.lastUsed || a.created || 0));
+        // Sort: use custom position order for named lists if available, otherwise date
+        if (options.listId !== undefined && options.listId !== null && options.listId > 0 &&
+            this._listPositions[options.listId] && this._listPositions[options.listId].length > 0) {
+            const positions = this._listPositions[options.listId];
+            const posMap = new Map(positions.map((id, idx) => [id, idx]));
+            items.sort((a, b) => {
+                const posA = posMap.has(a.id) ? posMap.get(a.id) : Infinity;
+                const posB = posMap.has(b.id) ? posMap.get(b.id) : Infinity;
+                if (posA !== posB) return posA - posB;
+                return (b.lastUsed || b.created || 0) - (a.lastUsed || a.created || 0);
+            });
+        } else {
+            items.sort((a, b) => (b.lastUsed || b.created || 0) - (a.lastUsed || a.created || 0));
+        }
 
         if (options.limit) {
             items = items.slice(0, options.limit);
@@ -576,6 +591,7 @@ export class ClipboardDatabase {
         });
 
         this._lists = this._lists.filter(l => l.id !== listId);
+        delete this._listPositions[listId];
         this._save();
     }
 
@@ -585,6 +601,39 @@ export class ClipboardDatabase {
             item.listId = listId;
             this._save();
         }
+    }
+
+    moveItemInList(listId, itemId, direction) {
+        const listItems = this._items.filter(i => i.listId === listId);
+
+        let positions = this._listPositions[listId] ? [...this._listPositions[listId]] : null;
+
+        if (!positions || positions.length === 0) {
+            // Build initial order from date sort
+            const sorted = [...listItems].sort((a, b) => (b.lastUsed || b.created || 0) - (a.lastUsed || a.created || 0));
+            positions = sorted.map(i => i.id);
+        } else {
+            // Keep only IDs still in this list, append any newly added ones
+            positions = positions.filter(id => listItems.some(i => i.id === id));
+            listItems.forEach(i => {
+                if (!positions.includes(i.id)) positions.push(i.id);
+            });
+        }
+
+        const idx = positions.indexOf(itemId);
+        if (idx === -1) return false;
+
+        if (direction === 'up' && idx > 0) {
+            [positions[idx - 1], positions[idx]] = [positions[idx], positions[idx - 1]];
+        } else if (direction === 'down' && idx < positions.length - 1) {
+            [positions[idx], positions[idx + 1]] = [positions[idx + 1], positions[idx]];
+        } else {
+            return false;
+        }
+
+        this._listPositions[listId] = positions;
+        this._save();
+        return true;
     }
 
     exportData() {
