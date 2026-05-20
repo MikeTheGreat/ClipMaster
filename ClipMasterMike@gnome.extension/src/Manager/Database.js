@@ -51,6 +51,20 @@ export class ClipboardDatabase {
         await this._load();
     }
 
+    async reload() {
+        this._timeoutManager.removeAll();
+        this._isDirty = false;
+        this._isLoaded = false;
+        this._items = [];
+        this._lists = [];
+        this._listPositions = {};
+        this._nextId = 1;
+        this._encryption = null;
+        await this._setupEncryption();
+        await this._load();
+        debugLog('Database reloaded from disk');
+    }
+
     async _setupEncryption() {
         if (this._settings && this._settings.get_boolean('encrypt-database')) {
             // Key file path: same directory as clipboard.json, named clipmaster.key

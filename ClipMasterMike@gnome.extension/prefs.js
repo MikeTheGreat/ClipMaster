@@ -942,27 +942,42 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
         dialog.save(window, null, (dialog, result) => {
             try {
                 const file = dialog.save_finish(result);
-                if (file) {
-                    // Read and export database
-                    const storagePath = settings.get_string('storage-path') ||
-                        GLib.build_filenamev([GLib.get_user_data_dir(), 'clipmaster', 'clipboard.json']);
+                if (!file) return;
 
-                    const sourceFile = Gio.File.new_for_path(storagePath);
-                    if (sourceFile.query_exists(null)) {
-                        sourceFile.copy(file, Gio.FileCopyFlags.OVERWRITE, null, null);
+                const storagePath = settings.get_string('storage-path') ||
+                    GLib.build_filenamev([GLib.get_user_data_dir(), 'clipmaster', 'clipboard.json']);
 
-                        // Also export the key file if it exists (for encrypted backups)
-                        const keySourcePath = storagePath.replace(/\.json$/, '.key');
-                        const keySourceFile = Gio.File.new_for_path(keySourcePath);
-                        if (keySourceFile.query_exists(null)) {
-                            const exportPath = file.get_path();
-                            const keyDestPath = exportPath.replace(/\.json$/, '.key');
-                            const keyDestFile = Gio.File.new_for_path(keyDestPath);
-                            keySourceFile.copy(keyDestFile, Gio.FileCopyFlags.OVERWRITE, null, null);
-                            console.log('ClipMaster: Exported encryption key file alongside database');
-                        }
+                const sourceFile = Gio.File.new_for_path(storagePath);
+                if (!sourceFile.query_exists(null)) return;
+
+                const [readOk, rawBytes] = sourceFile.load_contents(null);
+                if (!readOk) throw new Error('Could not read database file');
+
+                let content = new TextDecoder().decode(rawBytes);
+
+                // Decrypt if the database is encrypted, so the export is always plaintext
+                if (content.startsWith('ENC:')) {
+                    const keyFilePath = storagePath.replace(/\.json$/, '.key');
+                    const keyFile = Gio.File.new_for_path(keyFilePath);
+                    let key = null;
+                    if (keyFile.query_exists(null)) {
+                        const [keyOk, keyBytes] = keyFile.load_contents(null);
+                        if (keyOk) key = new TextDecoder().decode(keyBytes).trim();
                     }
+                    if (!key) key = settings.get_string('encryption-key');
+                    if (!key) throw new Error('Cannot decrypt database: encryption key not found');
+
+                    const decoded = new TextDecoder().decode(GLib.base64_decode(content.substring(4)));
+                    let plainText = '';
+                    for (let i = 0; i < decoded.length; i++)
+                        plainText += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                    content = plainText;
                 }
+
+                const outBytes = new TextEncoder().encode(content);
+                file.replace_contents(outBytes, null, false,
+                    Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+                console.log('ClipMaster: Exported plaintext database');
             } catch (e) {
                 console.error(`ClipMaster: Export error: ${e.message}`);
             }
@@ -985,42 +1000,46 @@ export default class ClipMasterPreferences extends ExtensionPreferences {
         dialog.open(window, null, (dialog, result) => {
             try {
                 const file = dialog.open_finish(result);
-                if (file) {
-                    // Import to database
-                    const storagePath = settings.get_string('storage-path') ||
-                        GLib.build_filenamev([GLib.get_user_data_dir(), 'clipmaster', 'clipboard.json']);
+                if (!file) return;
 
-                    const destFile = Gio.File.new_for_path(storagePath);
-                    const dir = GLib.path_get_dirname(storagePath);
-                    GLib.mkdir_with_parents(dir, 0o755);
+                const storagePath = settings.get_string('storage-path') ||
+                    GLib.build_filenamev([GLib.get_user_data_dir(), 'clipmaster', 'clipboard.json']);
 
-                    file.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+                const destFile = Gio.File.new_for_path(storagePath);
+                const dir = GLib.path_get_dirname(storagePath);
+                GLib.mkdir_with_parents(dir, 0o755);
 
-                    // Also import the key file if it exists (for encrypted backups)
-                    const importPath = file.get_path();
-                    const keySourcePath = importPath.replace(/\.json$/, '.key');
-                    const keySourceFile = Gio.File.new_for_path(keySourcePath);
-                    if (keySourceFile.query_exists(null)) {
-                        const keyDestPath = storagePath.replace(/\.json$/, '.key');
-                        const keyDestFile = Gio.File.new_for_path(keyDestPath);
-                        keySourceFile.copy(keyDestFile, Gio.FileCopyFlags.OVERWRITE, null, null);
-                        console.log('ClipMaster: Imported encryption key file alongside database');
+                file.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
 
-                        // Also update GSettings with the key for backward compatibility
-                        try {
-                            const [success, keyContents] = keySourceFile.load_contents(null);
-                            if (success) {
-                                const keyStr = new TextDecoder().decode(keyContents).trim();
-                                if (keyStr.length >= 16) {
-                                    settings.set_string('encryption-key', keyStr);
-                                    console.log('ClipMaster: Updated GSettings with imported encryption key');
-                                }
+                // Also import the key file if it exists (for encrypted backups)
+                const importPath = file.get_path();
+                const keySourcePath = importPath.replace(/\.json$/, '.key');
+                const keySourceFile = Gio.File.new_for_path(keySourcePath);
+                if (keySourceFile.query_exists(null)) {
+                    const keyDestPath = storagePath.replace(/\.json$/, '.key');
+                    const keyDestFile = Gio.File.new_for_path(keyDestPath);
+                    keySourceFile.copy(keyDestFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+                    console.log('ClipMaster: Imported encryption key file alongside database');
+
+                    // Update GSettings with the key and ensure encryption is enabled
+                    try {
+                        const [success, keyContents] = keySourceFile.load_contents(null);
+                        if (success) {
+                            const keyStr = new TextDecoder().decode(keyContents).trim();
+                            if (keyStr.length >= 16) {
+                                settings.set_string('encryption-key', keyStr);
+                                settings.set_boolean('encrypt-database', true);
+                                console.log('ClipMaster: Updated GSettings with imported encryption key');
                             }
-                        } catch (keyError) {
-                            console.error(`ClipMaster: Could not update GSettings with key: ${keyError.message}`);
                         }
+                    } catch (keyError) {
+                        console.error(`ClipMaster: Could not update GSettings with key: ${keyError.message}`);
                     }
                 }
+
+                // Signal the running extension to reload from disk
+                settings.set_boolean('reload-database', !settings.get_boolean('reload-database'));
+                console.log('ClipMaster: Import complete, signalled extension to reload');
             } catch (e) {
                 console.error(`ClipMaster: Import error: ${e.message}`);
             }

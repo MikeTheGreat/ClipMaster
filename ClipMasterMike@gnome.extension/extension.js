@@ -37,6 +37,22 @@ export default class ClipMasterExtension extends Extension {
             'debug-mode-changed'
         );
 
+        this._signalManager.connect(
+            this._settings,
+            'changed::reload-database',
+            () => {
+                debugLog('reload-database signal received, reloading from disk');
+                this._database.reload().then(() => {
+                    if (this._indicator) {
+                        this._refreshIndicator();
+                    }
+                }).catch(e => {
+                    console.error(`ClipMaster: Database reload error: ${e.message}`);
+                });
+            },
+            'reload-database'
+        );
+
         const storagePath = this._settings.get_string('storage-path');
         this._database = new ClipboardDatabase(
             storagePath || null,

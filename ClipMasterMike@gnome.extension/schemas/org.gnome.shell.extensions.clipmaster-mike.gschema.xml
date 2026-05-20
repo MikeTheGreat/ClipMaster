@@ -274,6 +274,13 @@
       <description>List IDs to show in filter bar for quick access (max 2)</description>
     </key>
     
+    <!-- Reload signal (toggled by prefs after import to trigger in-extension reload) -->
+    <key name="reload-database" type="b">
+      <default>false</default>
+      <summary>Reload database</summary>
+      <description>Toggle this key to signal the running extension to reload the database from disk.</description>
+    </key>
+
     <!-- Debug Settings -->
     <key name="debug-mode" type="b">
       <default>false</default>
